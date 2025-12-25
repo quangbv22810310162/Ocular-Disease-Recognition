@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả nhận dạng bệnh về mắt</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Kết quả nhận dạng bệnh về mắt</h1>
+        
+        <!-- Phần hiển thị kết quả và ảnh -->
+        <div class="result-container">
+            <div class="image-preview-container">
+                <img src="{{ image_url }}" alt="Uploaded Image" class="result-image">
+            </div>
+            <div class="result-details">
+                <div class="single-result">
+                    <h2>Dự đoán bệnh: </h2>
+                    <span class="disease">{{ results[0].disease }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần thông tin chi tiết về bệnh -->
+        <div class="disease-info-tabs">
+            <div class="tab-header">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="showTab('description')">
+                        <i class="fas fa-info-circle"></i> Mô tả bệnh
+                    </button>
+                    <button class="tab-btn" onclick="showTab('symptoms')">
+                        <i class="fas fa-list"></i> Triệu chứng
+                    </button>
+                    <button class="tab-btn" onclick="showTab('advice')">
+                        <i class="fas fa-comment-medical"></i> Lời khuyên
+                    </button>
+                    <button class="tab-btn" onclick="showTab('prevention')">
+                        <i class="fas fa-shield-alt"></i> Phòng ngừa
+                    </button>
+                </div>
+                <div class="audio-controls">
+                    <button id="audioBtn" onclick="toggleAudio()" class="audio-btn">
+                        <i class="fas fa-play"></i>
+                        <span>Đọc thông tin</span>
+                    </button>
+                </div>
+            </div>
+            <div class="tab-content" id="diseaseInfo">
+                <!-- Nội dung sẽ được thêm vào đây bằng JavaScript -->
+            </div>
+        </div>
+
+        <a href="/" class="btn">Quay lại trang chủ</a>
+    </div>
+
+    <audio id="responseAudio" style="display: none;"></audio>
+
+    <script>
+        let audioPlaying = false;
+        let currentAudio = null;
+
+        // Hiển thị thông tin mặc định khi tải trang
+        window.onload = function() {
+            showTab('description');
+        }
+
+        function showTab(type) {
+            // Reset audio state
+            if (audioPlaying) {
+                toggleAudio();
+            }
+            
+            // Cập nhật active button
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Lấy thông tin bệnh
+            fetch('/get_disease_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    disease: '{{ results[0].disease }}',
+                    info_type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const diseaseInfo = document.getElementById('diseaseInfo');
+                diseaseInfo.innerHTML = formatInfo(data.info, type);
+                
+                // Cập nhật audio source
+                if (data.audio_url) {
+                    const audio = document.getElementById('responseAudio');
+                    audio.src = data.audio_url;
+                }
+            });
+        }
+
+        function formatInfo(info, type) {
+            const titles = {
+                'description': 'Mô tả bệnh',
+                'symptoms': 'Triệu chứng',
+                'advice': 'Lời khuyên',
+                'prevention': 'Phòng ngừa'
+            };
+
+            return `
+                <div class="info-content">
+                    <h3>${titles[type]}</h3>
+                    <div class="info-text">
+                        ${info.split('\n').map(line => `<p>${line.trim().replace(/\.$/, '')}</p>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleAudio() {
+            const audioBtn = document.getElementById('audioBtn');
+            const audio = document.getElementById('responseAudio');
+            
+            if (audioPlaying) {
+                // Dừng audio
+                audio.pause();
+                audioPlaying = false;
+                audioBtn.classList.remove('playing');
+                audioBtn.innerHTML = '<i class="fas fa-play"></i><span>Đọc thông tin</span>';
+            } else {
+                // Phát audio
+                audio.play();
+                audioPlaying = true;
+                audioBtn.classList.add('playing');
+                audioBtn.innerHTML = '<i class="fas fa-pause"></i><span>Dừng đọc</span>';
+            }
+        }
+
+        // Chatbot functions
+        function toggleChat() {
+            document.getElementById('chatPanel').classList.toggle('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (message) {
+                addMessage(message, 'user');
+                // Gửi câu hỏi đến server v�� nhận phản hồi
+                fetch('/chat_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        disease: '{{ results[0].disease }}'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage(data.response, 'bot');
+                })
+                .catch(error => {
+                    addMessage('Xin lỗi, đã có lỗi xảy ra.', 'bot');
+                });
+                input.value = '';
+            }
+        }
+
+        function addMessage(message, type) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            messageDiv.innerHTML = message.split('\n').join('<br>');
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Thêm event listener cho audio
+        document.getElementById('responseAudio').addEventListener('ended', function() {
+            // Reset trạng thái khi audio kết thúc
+            audioPlaying = false;
+            const audioBtn = document.getElementById('audioBtn');
+            audioBtn.classList.remove('playing');
+            audioBtn.innerHTML = '<i class="fas fa-play"></i><span>Đọc thông tin</span>';
+        });
+    </script>
+</body>
+</html>

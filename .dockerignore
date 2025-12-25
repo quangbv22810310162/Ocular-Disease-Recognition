@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.swp
+.env
+.env.*
+.git
+.gitignore
+.vscode/
+venv/
+.env/
+node_modules/
+ODIR-5K/
+preprocessed_images/
+image for test model/
+static/uploads/
+static/audio/
+database.db

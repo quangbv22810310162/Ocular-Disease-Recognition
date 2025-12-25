@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Eye Disease Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-eye"></i> Nhận diện bệnh mắt ứng dụng công nghệ học sâu</h1>
+            <div class="user-actions">
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Đăng xuất
+                </a>
+            </div>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>Tải lên hình ảnh</h2>
+                <form method="post" action="{{ url_for('predict') }}" enctype="multipart/form-data" id="upload-form">
+                    <div class="file-upload">
+                        <input type="file" name="file" id="imageUpload" accept=".png,.jpg,.jpeg" hidden>
+                        <label for="imageUpload" class="upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Chọn một tập tin</span>
+                        </label>
+                    </div>
+                    <div id="file-name"></div>
+
+                    <div class="image-preview-container">
+                        <img id="imagePreview" src="#" alt="Image Preview">
+                    </div>
+
+                    <button type="submit" class="submit-btn">Phân tích</button>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; Bệnh Viện Mắt Quang Bùi</p>
+        </footer>
+    </div>
+
+    {% if error %}
+    <div class="error-modal">
+        <div class="error-content">
+            <h2>Lỗi</h2>
+            <p>{{ error }}</p>
+            <button onclick="closeError()">Đóng</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const fileInput = document.getElementById("imageUpload");
+        const preview = document.getElementById("imagePreview");
+        const fileName = document.getElementById("file-name");
+
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = "📁 " + file.name;
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = "block";
+            } else {
+                fileName.textContent = "";
+                preview.src = "#";
+                preview.style.display = "none";
+            }
+        });
+    });
+
+    function closeError() {
+        const modal = document.querySelector(".error-modal");
+        if (modal) modal.style.display = "none";
+    }
+    </script>
+</body>
+</html>

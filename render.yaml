@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: ocular-disease-web
+    env: docker
+    plan: free
+    region: singapore
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: false
+      - key: DATABASE_PATH
+        value: /data/database.db
+      - key: UPLOAD_FOLDER
+        value: /data/uploads
+      - key: AUDIO_FOLDER
+        value: /data/audio
+      - key: INIT_DB_ON_STARTUP
+        value: true
+    disk:
+      name: ocular-data
+      mountPath: /data
+      sizeGB: 1
