@@ -129,7 +129,3 @@ python src/evaluate.py --model models/best_model.pth
 **Bùi Văn Quang**
 Sinh viên Công nghệ Thông tin
 
-
-
-
-Xong! Repo nhìn *chuyên nghiệp – rõ ràng – dễ hiểu* 👌
